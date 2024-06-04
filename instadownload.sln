@@ -1,0 +1,1185 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+using System.IO;
+
+ 
+
+ 
+namespace Instgram_Downloader
+
+ 
+{
+
+ 
+    public partial class Form1 : Form
+
+ 
+    {
+
+ 
+        List<TextBox> textboxes = new List<TextBox>();
+
+ 
+        List<Button> buttons = new List<Button>();
+
+ 
+        List<Label> labels = new List<Label>();
+
+ 
+        string downloadDirectory = Directory.GetCurrentDirectory();
+
+ 
+
+ 
+        public Form1()
+
+ 
+        {
+
+ 
+            InitializeComponent();
+
+ 
+            this.MaximizeBox = false;
+
+ 
+
+ 
+            configureComponents();
+
+ 
+        }
+
+ 
+
+ 
+        private void addComponentsToLists()
+
+ 
+        {
+
+ 
+            textboxes.Add(tb_insta_userame);
+
+ 
+            textboxes.Add(tb_password);
+
+ 
+            textboxes.Add(tb_username);
+
+ 
+
+ 
+            buttons.Add(button_download);
+
+ 
+            buttons.Add(button_quit);
+
+ 
+            buttons.Add(button_location);
+
+ 
+
+ 
+            labels.Add(l_Login);
+
+ 
+            labels.Add(l_location);
+
+ 
+            
+
+ 
+        }
+
+ 
+        private void configureComponents()
+
+ 
+        {
+
+ 
+            addComponentsToLists();
+
+ 
+
+ 
+            foreach(TextBox tb in textboxes)
+
+ 
+            {
+
+ 
+                tb.Size = new Size(200, 22);
+
+ 
+                tb.TextAlign = HorizontalAlignment.Center;
+
+ 
+            }
+
+ 
+
+ 
+            foreach(Button butt in buttons)
+
+ 
+            {
+
+ 
+                butt.Size = new Size(200, 30);
+
+ 
+            }
+
+ 
+
+ 
+            l_location.Text = downloadDirectory;
+
+ 
+            tb_username.Text = "Username";
+
+ 
+            tb_password.Text = "Password";
+
+ 
+            tb_insta_userame.Text = "Instagram Profile";
+
+ 
+        }
+
+ 
+
+ 
+        private void button1_Click(object sender, EventArgs e)
+
+ 
+        {
+
+ 
+            l_Login.Text = "Logging in...";
+
+ 
+            new Instagram(tb_username.Text, tb_password.Text, tb_insta_userame.Text, downloadDirectory + "\\" + tb_insta_userame.Text + "\\", l_Login);
+
+ 
+        }
+
+ 
+        
+
+ 
+        private void selectDownloadFolderLocation()
+
+ 
+        {
+
+ 
+            FolderBrowserDialog fb = new FolderBrowserDialog();
+
+ 
+            fb.Description = "Select Folder to Download to";
+
+ 
+            fb.SelectedPath = Directory.GetCurrentDirectory();
+
+ 
+            fb.ShowNewFolderButton = true;
+
+ 
+            if(fb.ShowDialog() == DialogResult.OK)
+
+ 
+            {
+
+ 
+                downloadDirectory = fb.SelectedPath;
+
+ 
+                l_location.Visible = true;
+
+ 
+                l_location.Text = downloadDirectory;
+
+ 
+                
+
+ 
+            }
+
+ 
+
+ 
+        }
+
+ 
+
+ 
+        private void button_location_Click(object sender, EventArgs e)
+
+ 
+        {
+
+ 
+            selectDownloadFolderLocation();
+
+ 
+        }
+
+ 
+
+ 
+        private void button_quit_Click(object sender, EventArgs e)
+
+ 
+        {
+
+ 
+            Application.Exit();
+
+ 
+        }
+
+ 
+
+ 
+        private void tb_username_MouseClick(object sender, MouseEventArgs e)
+
+ 
+        {
+
+ 
+            tb_username.SelectAll();
+
+ 
+        }
+
+ 
+
+ 
+        private void tb_password_MouseClick(object sender, MouseEventArgs e)
+
+ 
+        {
+
+ 
+            tb_password.SelectAll();
+
+ 
+            tb_password.PasswordChar = '*';
+
+ 
+        }
+
+ 
+
+ 
+        private void tb_insta_userame_MouseClick(object sender, MouseEventArgs e)
+
+ 
+        {
+
+ 
+            tb_insta_userame.SelectAll();
+
+ 
+            
+
+ 
+        }
+
+ 
+
+ 
+        private void tb_password_Enter(object sender, EventArgs e)
+
+ 
+        {
+
+ 
+            tb_password.SelectAll();
+
+ 
+            tb_password.PasswordChar = '*';
+
+ 
+        }
+
+ 
+
+ 
+        private void tb_insta_userame_Enter(object sender, EventArgs e)
+
+ 
+        {
+
+ 
+            tb_insta_userame.SelectAll();
+
+ 
+        }
+
+ 
+    }
+
+ 
+}
+
+ 
+
+ 
+
+ 
+Download Form:
+
+ 
+
+ 
+
+
+ 
+using InstagramApiSharp.Classes.Models;
+
+ 
+using System;
+
+ 
+using System.Collections.Generic;
+
+ 
+using System.Windows.Forms;
+
+ 
+using System.Net;
+
+ 
+using System.IO;
+
+ 
+
+ 
+namespace Instgram_Downloader
+
+ 
+{
+
+ 
+    public partial class ConfirmForm : Form
+
+ 
+    {
+
+ 
+        //Lists needed to add download urls to.
+
+ 
+        List<InstaMedia> medialist;
+
+ 
+        List<string> imageUrls;
+
+ 
+        List<string> videoUrls;
+
+ 
+
+ 
+        string downloadDirectory;
+
+ 
+        string username;
+
+ 
+
+ 
+
+ 
+        public ConfirmForm(string imageCount, string username, string downloadDirectory, List<InstaMedia> medialist)
+
+ 
+        {
+
+ 
+            InitializeComponent();
+
+ 
+            this.MaximizeBox = false;
+
+ 
+            l_filename.Visible = true;
+
+ 
+            l_image_count.Text = imageCount;
+
+ 
+            
+
+ 
+            this.username = username;
+
+ 
+            l_instagram_user.Text = this.username;
+
+ 
+            this.downloadDirectory = downloadDirectory;
+
+ 
+            this.medialist = medialist;
+
+ 
+
+ 
+            l_filename.Text = "Directory: " + downloadDirectory;
+
+ 
+            
+
+ 
+            Directory.CreateDirectory(downloadDirectory); 
+
+ 
+        }
+
+ 
+
+ 
+        //Sort through the InstaMedia list and filter the Images
+
+ 
+        private void scrapeLinks()
+
+ 
+        {
+
+ 
+            l_filename.Visible = true;
+
+ 
+            imageUrls =  new List<string>();
+
+ 
+            videoUrls = new List<string>();
+
+ 
+
+ 
+            foreach (InstaMedia item in medialist)
+
+ 
+            {
+
+ 
+                if (item != null && item.Caption != null)
+
+ 
+                {
+
+ 
+                    string captionText = item.Caption.Text;
+
+ 
+                    if (captionText != null)
+
+ 
+                    {
+
+ 
+                        if (item.MediaType == InstaMediaType.Image)
+
+ 
+                        {
+
+ 
+                            for (int x = 0; x < item.Images.Count; x++)
+
+ 
+                            {
+
+ 
+                                if (item.Images[x] != null && item.Images[x].Uri != null)
+
+ 
+                                {
+
+ 
+                                    imageUrls.Add(item.Images[x].Uri); //Add image URLs to list
+
+ 
+                                    Console.WriteLine(item.Images[x].Uri);
+
+ 
+                                }
+
+ 
+                            }
+
+ 
+                        }
+
+ 
+                        if(item.MediaType == InstaMediaType.Video)
+
+ 
+                        {
+
+ 
+                            for(int x = 0; x < item.Videos.Count; x++)
+
+ 
+                            {
+
+ 
+                                if(item.Videos[x] != null && item.Videos[x].Uri != null)
+
+ 
+                                {
+
+ 
+                                    videoUrls.Add(item.Videos[x].Uri);
+
+ 
+                                    Console.WriteLine(item.Videos[x].Uri);
+
+ 
+                                }
+
+ 
+                            }
+
+ 
+                        }
+
+ 
+                    }
+
+ 
+                }
+
+ 
+            }
+
+ 
+            downloadImages();
+
+ 
+            downloadVideos();
+
+ 
+        }
+
+ 
+
+ 
+        private void downloadVideos()
+
+ 
+        {
+
+ 
+            //Download Videos
+
+ 
+            l_filename.Text = "Downloading Videos to: " + downloadDirectory;
+
+ 
+            int videoCounter = 1;
+
+ 
+            for (int i = 0; i < videoUrls.Count; i+=3)
+
+ 
+            {
+
+ 
+                WebClient wc = new WebClient();
+
+ 
+                wc.DownloadFileAsync(new Uri(videoUrls[i]), downloadDirectory  + "video" + videoCounter + ".mp4");
+
+ 
+                videoCounter++;
+
+ 
+                while (wc.IsBusy)
+
+ 
+                {
+
+ 
+                    //To Something
+
+ 
+                    //PROGRESS BAR IN HERE PLEASE
+
+ 
+                }
+
+ 
+                Console.WriteLine("Done: {0}", "video" + videoCounter + ".mp4");
+
+ 
+            }
+
+ 
+        }
+
+ 
+
+ 
+        private void downloadImages()
+
+ 
+        {
+
+ 
+            //Download Images.
+
+ 
+            l_filename.Text = "Downloading images to: " + downloadDirectory;
+
+ 
+            int imageCounter = 1;
+
+ 
+            for (int i = 0; i < imageUrls.Count; i += 2)
+
+ 
+            {
+
+ 
+                WebClient wc = new WebClient();
+
+ 
+                wc.DownloadFileAsync(new Uri(imageUrls[i]), downloadDirectory + "image" + imageCounter + ".jpg");
+
+ 
+                imageCounter++;
+
+ 
+                while (wc.IsBusy)
+
+ 
+                {
+
+ 
+                    //Do Something
+
+ 
+                    //PROGRESS BAR IN HERE
+
+ 
+                }
+
+ 
+                Console.WriteLine("Done: {0}", "image" + imageCounter + ".jpg");
+
+ 
+            }
+
+ 
+        }
+
+ 
+
+ 
+        //Confirm and download
+
+ 
+        private void button_confirm_Click_1(object sender, EventArgs e)
+
+ 
+        {
+
+ 
+            scrapeLinks();
+
+ 
+
+ 
+        }
+
+ 
+
+ 
+        private void ConfirmForm_FormClosed(object sender, FormClosedEventArgs e)
+
+ 
+        {
+
+ 
+            Application.Exit();
+
+ 
+        }
+
+ 
+    }
+
+ 
+}
+
+ 
+
+
+ 
+
+ 
+Instagram API Class
+
+ 
+
+ 
+using InstagramApiSharp;
+
+ 
+
+
+ 
+using InstagramApiSharp.API;
+
+ 
+using InstagramApiSharp.API.Builder;
+
+ 
+using InstagramApiSharp.Classes;
+
+ 
+using InstagramApiSharp.Classes.Models;
+
+ 
+using InstagramApiSharp.Logger;
+
+ 
+using System;
+
+ 
+using System.Collections.Generic;
+
+ 
+using System.IO;
+
+ 
+using System.Linq;
+
+ 
+using System.Text;
+
+ 
+using System.Threading.Tasks;
+
+ 
+using System.Windows.Forms;
+
+ 
+
+ 
+namespace Instgram_Downloader
+
+ 
+{
+
+ 
+    class Instagram
+
+ 
+    {
+
+ 
+        string username;
+
+ 
+        string password;
+
+ 
+        string downloadDirectory;
+
+ 
+        string instagram_username;
+
+ 
+        Label l_login;
+
+ 
+
+ 
+
+ 
+        private static IInstaApi api;
+
+ 
+       
+
+ 
+
+ 
+        public Instagram(string username, string password, string instagram_username, string downloadDirectory, Label l_login)
+
+ 
+        {
+
+ 
+            this.username = username;
+
+ 
+            this.password = password;
+
+ 
+            this.downloadDirectory = downloadDirectory;
+
+ 
+            this.instagram_username = instagram_username;
+
+ 
+            this.l_login = l_login;
+
+ 
+            Console.WriteLine("Instagram Class Constructor");
+
+ 
+            login();
+
+ 
+            
+
+ 
+        }
+
+ 
+
+ 
+        
+
+ 
+        private async void confirmForm()
+
+ 
+        {
+
+ 
+            IResult<InstaMediaList> instaUser = await api.UserProcessor.GetUserMediaAsync(instagram_username, PaginationParameters.MaxPagesToLoad(9000));
+
+ 
+            List<InstaMedia> mediaList = instaUser.Value.ToList();
+
+ 
+            getImageCount(mediaList);
+
+ 
+            ConfirmForm confirmBox = new ConfirmForm(imageCount.ToString(), instagram_username, downloadDirectory, mediaList); //Pass in the imagecount, username, download directory and medialist for use on the confirm and download form
+
+ 
+            confirmBox.Show();
+
+ 
+        }
+
+ 
+
+ 
+        int imageCount;
+
+ 
+        List<string> imageUrls = new List<string>();
+
+ 
+
+ 
+        private void getImageCount(List<InstaMedia> medialist)
+
+ 
+        {
+
+ 
+            foreach (InstaMedia item in medialist)
+
+ 
+            {
+
+ 
+                if (item != null && item.Caption != null)
+
+ 
+                {
+
+ 
+                    string captionText = item.Caption.Text;
+
+ 
+                    if (captionText != null)
+
+ 
+                    {
+
+ 
+                        if (item.MediaType == InstaMediaType.Image)
+
+ 
+                        {
+
+ 
+                            for (int x = 0; x < item.Images.Count; x++)
+
+ 
+                            {
+
+ 
+                                if (item.Images[x] != null && item.Images[x].Uri != null)
+
+ 
+                                {
+
+ 
+                                    imageUrls.Add(item.Images[x].Uri.ToString());
+
+ 
+                                }
+
+ 
+                            }
+
+ 
+                        }
+
+ 
+                    }
+
+ 
+                }
+
+ 
+            }
+
+ 
+            imageCount = imageUrls.Count /2;
+
+ 
+            
+
+ 
+        }
+
+ 
+
+ 
+
+ 
+        private async void login()
+
+ 
+        {
+
+ 
+            var userSession = new UserSessionData
+
+ 
+            {
+
+ 
+                UserName = username,
+
+ 
+                Password = password
+
+ 
+            };
+
+ 
+
+ 
+            api= InstaApiBuilder.CreateBuilder()
+
+ 
+                .SetUser(userSession)
+
+ 
+                .UseLogger(new DebugLogger(LogLevel.Exceptions))
+
+ 
+                .Build();
+
+ 
+            const string stateFile = "state.bin";
+
+ 
+            try
+
+ 
+            {
+
+ 
+                // load session file if exists
+
+ 
+                if (File.Exists(stateFile))
+
+ 
+                {
+
+ 
+                    Console.WriteLine("Loading state from file");
+
+ 
+                    l_login.Text = "Loading state from file";
+
+ 
+                    using (var fs = File.OpenRead(stateFile))
+
+ 
+                    {
+
+ 
+                        api.LoadStateDataFromStream(fs);
+
+ 
+                        // in .net core or uwp apps don't use LoadStateDataFromStream
+
+ 
+                        // use this one:
+
+ 
+                        // _instaApi.LoadStateDataFromString(new StreamReader(fs).ReadToEnd());
+
+ 
+                        // you should pass json string as parameter to this function.
+
+ 
+                    }
+
+ 
+                    l_login.Text = "Logged in as: " + username;
+
+ 
+                    confirmForm();
+
+ 
+                }
+
+ 
+            }
+
+ 
+            catch (Exception e)
+
+ 
+            {
+
+ 
+                Console.WriteLine(e);
+
+ 
+            }
+
+ 
+
+ 
+            if (!api.IsUserAuthenticated)
+
+ 
+            {
+
+ 
+                // login
+
+ 
+                Console.WriteLine($"Logging in as {userSession.UserName}");
+
+ 
+                l_login.Text = $"Logging in...";
+
+ 
+                var logInResult = await api.LoginAsync();
+
+ 
+                if (!logInResult.Succeeded)
+
+ 
+                {
+
+ 
+                    Console.WriteLine($"Unable to login: {logInResult.Info.Message}");
+
+ 
+                    l_login.Text = $"Unable to login: {logInResult.Info.Message}";
+
+ 
+                    return;
+
+ 
+                }
+
+ 
+                else
+
+ 
+                {
+
+ 
+                    Console.WriteLine("Login Succeeded\nLogged in as: " + userSession.LoggedInUser.UserName);
+
+ 
+                    l_login.Text = "Logged in as: " + userSession.LoggedInUser.UserName;
+
+ 
+                    confirmForm();
+
+ 
+                }
+
+ 
+            }
+
+ 
+            
+
+ 
+            // save session in file
+
+ 
+            var state = api.GetStateDataAsStream();
+
+ 
+            // in .net core or uwp apps don't use GetStateDataAsStream.
+
+ 
+            // use this one:
+
+ 
+            // var state = _instaApi.GetStateDataAsString();
+
+ 
+            // this returns you session as json string.
+
+ 
+            using (var fileStream = File.Create(stateFile))
+
+ 
+            {
+
+ 
+                state.Seek(0, SeekOrigin.Begin);
+
+ 
+                state.CopyTo(fileStream);
+
+ 
+            }
+
+ 
+            
+
+ 
+        }
+
+ 
+    }
+
+ 
+}
